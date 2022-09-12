@@ -1,0 +1,53 @@
+{
+  "name": "electron-vue-vite",
+  "version": "1.0.0",
+  "main": "dist/electron/main/index.js",
+  "author": "dancingcode",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": " vite",
+    "build": " vite build && electron-builder"
+  },
+  "engines": {
+    "node": ">=14.17.0"
+  },
+  "devDependencies": {
+    "@quasar/vite-plugin": "^1.0.10",
+    "@types/request": "^2.48.8",
+    "@vitejs/plugin-vue": "^2.3.3",
+    "electron": "^19.0.8",
+    "electron-builder": "^23.1.0",
+    "highlight.js": "^11.6.0",
+    "path-browserify": "^1.0.1",
+    "rimraf": "^3.0.2",
+    "sass": "~1.26.5",
+    "sass-loader": "^13.0.2",
+    "typescript": "^4.7.4",
+    "vite": "^2.9.13",
+    "vite-plugin-electron": "^0.7.5",
+    "vite-plugin-optimizer": "^1.4.0",
+    "vue": "^3.2.37",
+    "vue-router": "^4.1.2",
+    "vue-tsc": "^0.38.3",
+    "vuex": "^4.0.2"
+  },
+  "env": {
+    "VITE_DEV_SERVER_HOST": "127.0.0.1",
+    "VITE_DEV_SERVER_PORT": 3344
+  },
+  "dependencies": {
+    "@quasar/extras": "^1.14.3",
+    "axios": "^0.27.2",
+    "cheerio": "^1.0.0-rc.12",
+    "download": "^8.0.0",
+    "electron-log": "^4.4.8",
+    "electron-updater": "^5.2.1",
+    "feedparser": "^2.2.10",
+    "log4js": "^6.6.1",
+    "quasar": "^2.7.5",
+    "request": "^2.88.2",
+    "sqlite3": "^5.0.9"
+  }
+
+}

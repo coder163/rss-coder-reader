@@ -1,0 +1,66 @@
+/**
+ * @see https://www.electron.build/configuration/configuration
+ */
+{
+
+  "publish": [
+    {
+      "provider": "generic",
+      "url": "http://127.0.0.1:10086/public",
+      //更新服务器地址,可为空
+    }
+  ],
+//  "publish": {
+//    "provider": "github",
+//    "owner": "coder163",
+//    "repo": "release-demo1"
+//  },
+
+  "appId": "com.coder163",
+  "productName": "猿阅",//项目名，也是生成的安装文件名，即aDemo.exe
+  "copyright": "Copyright © 2022",//版权信息
+  "asar": true,
+  "directories": {
+    "output": "release/${version}"
+  },
+  "extraResources": [
+    {
+      "from": "./config/",
+      "to": "../config"
+    }
+  ],
+  "files": [
+    "dist"
+  ],
+  "mac": {
+    "artifactName": "${productName}_${version}.${ext}",
+    "target": [
+      "dmg"
+    ]
+  },
+  linux: {
+    "icon": "./favicon.ico",
+    // 包含各种尺寸图标的文件夹
+    target: [
+      "AppImage"
+    ],
+  },
+  "win": {
+    "icon": "./favicon.ico",
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "artifactName": "${productName}_${version}.${ext}"
+  },
+  "nsis": {
+    "oneClick": false,
+    "perMachine": false,
+    "allowToChangeInstallationDirectory": true,
+    "deleteAppDataOnUninstall": false,
+  }
+}
