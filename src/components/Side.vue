@@ -14,7 +14,7 @@
       <q-card-section>
         <q-list>
           <!-- 分类管理 -->
-          <q-expansion-item :id="'classify' + (index)" v-for="(sub, index) in subs" default-opened dense :label="sub.label">
+          <q-expansion-item  :id="'classify' + (index)" v-for="(sub, index) in subs" default-opened dense :label="sub.label">
             <!-- 右键菜单绑定到指定元素 -->
             <q-popup-proxy context-menu :target="'#classify' + index">
 
@@ -40,7 +40,7 @@
             <!-- 订阅管理 -->
             <q-list padding dense>
 
-              <q-item header-inset-level="1" :id="'sub' + ch.id" clickable v-ripple :inset-level="0" v-for=" ch in sub.children" @click="click(ch)">
+              <q-item header-inset-level="1" :id="'sub' + ch.id" clickable v-ripple :inset-level="0" v-for=" ch in sub.children" @click="click(ch)" :active="ch.id === itemId" >
                 <!-- 右键菜单绑定到指定元素 -->
                 <q-popup-proxy context-menu :target="'#sub' + ch.id">
 
@@ -257,8 +257,9 @@ async function updateSub() {
   subs.value = await treeServiceImpl.listAllNodeWithType("0", 0);
 }
 
+let itemId=ref()
 function click(info: any) {
-
+  itemId.value=info.id;
   //通知主线程
   ipcRenderer.send("update-item-list", info.id);
 }

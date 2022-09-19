@@ -7,7 +7,8 @@
   "private": true,
   "scripts": {
     "dev": " vite",
-    "build": " vite build && electron-builder"
+    "build": " vite build && electron-builder",
+    "release": "cross-env GH_TOKEN=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 electron-builder"
   },
   "engines": {
     "node": ">=14.17.0"
@@ -16,6 +17,7 @@
     "@quasar/vite-plugin": "^1.0.10",
     "@types/request": "^2.48.8",
     "@vitejs/plugin-vue": "^2.3.3",
+    "axios": "^0.27.2",
     "electron": "^19.0.8",
     "electron-builder": "^23.1.0",
     "highlight.js": "^11.6.0",
@@ -38,7 +40,6 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.14.3",
-    "axios": "^0.27.2",
     "cheerio": "^1.0.0-rc.12",
     "download": "^8.0.0",
     "electron-log": "^4.4.8",
@@ -49,5 +50,4 @@
     "request": "^2.88.2",
     "sqlite3": "^5.0.9"
   }
-
 }

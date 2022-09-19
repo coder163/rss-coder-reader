@@ -1,28 +1,28 @@
 function domReady(condition: DocumentReadyState[] = ['complete', 'interactive']) {
-  return new Promise(resolve => {
-    if (condition.includes(document.readyState)) {
-      resolve(true)
-    } else {
-      document.addEventListener('readystatechange', () => {
+    return new Promise(resolve => {
         if (condition.includes(document.readyState)) {
-          resolve(true)
+            resolve(true)
+        } else {
+            document.addEventListener('readystatechange', () => {
+                if (condition.includes(document.readyState)) {
+                    resolve(true)
+                }
+            })
         }
-      })
-    }
-  })
+    })
 }
 
 const safeDOM = {
-  append(parent: HTMLElement, child: HTMLElement) {
-    if (!Array.from(parent.children).find(e => e === child)) {
-      return parent.appendChild(child)
-    }
-  },
-  remove(parent: HTMLElement, child: HTMLElement) {
-    if (Array.from(parent.children).find(e => e === child)) {
-      return parent.removeChild(child)
-    }
-  },
+    append(parent: HTMLElement, child: HTMLElement) {
+        if (!Array.from(parent.children).find(e => e === child)) {
+            return parent.appendChild(child)
+        }
+    },
+    remove(parent: HTMLElement, child: HTMLElement) {
+        if (Array.from(parent.children).find(e => e === child)) {
+            return parent.removeChild(child)
+        }
+    },
 }
 
 /**
@@ -32,10 +32,10 @@ const safeDOM = {
  * https://matejkustec.github.io/SpinThatShit
  */
 function useLoading() {
-  const className = `loading`
-  const styleContent = `
+    const className = `loading`
+    const styleContent = `
   body {
-
+    background: #ecf0f6;
     text-align: center;
     padding: 20%;
   }
@@ -83,39 +83,39 @@ function useLoading() {
   }
 }
     `
-  const oStyle = document.createElement('style')
-  const oDiv = document.createElement('div')
+    const oStyle = document.createElement('style')
+    const oDiv = document.createElement('div')
 
-  oStyle.id = 'app-loading-style'
-  oStyle.innerHTML = styleContent
-  oDiv.className = className
-  oDiv.innerHTML = `
+    oStyle.id = 'app-loading-style'
+    oStyle.innerHTML = styleContent
+    oDiv.className = className
+    oDiv.innerHTML = `
   <h4>正在努力加载,请稍后</h4>
   <span></span> <span></span> <span></span>
   <span></span> <span></span> <span></span>
   <span></span> <span></span> <span></span>
  `
 
-  return {
-    appendLoading() {
-      safeDOM.append(document.head, oStyle)
-      safeDOM.append(document.body, oDiv)
-    },
-    removeLoading() {
-      safeDOM.remove(document.head, oStyle)
-      safeDOM.remove(document.body, oDiv)
-    },
-  }
+    return {
+        appendLoading() {
+            safeDOM.append(document.head, oStyle)
+            safeDOM.append(document.body, oDiv)
+        },
+        removeLoading() {
+            safeDOM.remove(document.head, oStyle)
+            safeDOM.remove(document.body, oDiv)
+        },
+    }
 }
 
 // ----------------------------------------------------------------------
 
-const { appendLoading, removeLoading } = useLoading()
+const {appendLoading, removeLoading} = useLoading()
 domReady().then(appendLoading)
 
 window.onmessage = ev => {
 
-  ev.data.payload === 'removeLoading' && removeLoading()
+    ev.data.payload === 'removeLoading' && removeLoading()
 }
 
 // setTimeout(removeLoading, 10)

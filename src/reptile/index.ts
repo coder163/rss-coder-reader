@@ -21,59 +21,98 @@ let asi = new ArticleServiceImpl()
 const download = require('download')
 export default class Reptile {
 
+    public static async parseAndDownloadImg($: any, link: string, path: string,cb:Function): Promise<string> {
+        let fpath = `${getConfigPath()}/list/${path}`
+        console.log(fpath)
+        let imgs = $("img");
+        return new Promise(async (resolve, reject) => {
+            for (let i = 0; i < imgs.length; i++) {
+                //获取正常的值
+                let source = $(imgs[i]).attr("src");
+                if (source.startsWith('file:///')) {
+                    continue
+                }
+                // debugger
+                //如果不是以http开头的尝试获取懒加载地址
+                if (!source.startsWith('http')) {
+                    if (source.startsWith("/")) {
+                        //临时解码并提取url中的域名
+                        let domain = (link.match(/(\w+):\/\/([^/:]+)(:\d*)?/) as RegExpMatchArray)[0];
+                        source = domain + source;
+                    } else {
+                        //处理懒加载
+                        source = $(imgs[i]).attr("data-original");
+                        if (source === undefined) {
+                            source = $(imgs[i]).attr("data-actualsrc");
+                        }
+                    }
+                }
+                if (source === undefined) {
+                    continue
+                }
+                try {
+                    $(imgs[i]).attr("referrerpolicy", null)
+                    //获取图片地址
+                    let res: IResult = await getImgAddr(source)
+                    logger.info(`当前正在解析第${i}张图，地址：${res.link}`)
+
+                    //除去#
+                    // @ts-ignore
+                    let suffix = res?.type?.split('/')[1]
+                    //重新命名
+                    let imgName = `${uuid().replaceAll("-", "")}.${suffix}`;
+                    //下载图片
+                    await download(res.link, `${fpath}/imgs/`, {
+                        filename: imgName,
+                        timeout:25000
+                    })
+                    $(imgs[i]).attr("src", `file:///${fpath}/imgs/${imgName}`);
+                } catch (e) {
+                    logger.error(`图片下载失败：${source}`, e)
+                }finally {
+                    cb(imgs.length,i)
+                }
+
+
+            }
+            resolve($.html())
+
+        })
+
+
+    }
+
     public static async parseArticle(item: IArticleItem) {
         //创建当前文章的目录
         let fpath = `${getConfigPath()}/list/${item.path}`
         mkdirsSync(`${fpath}/imgs`)
-
         //解析并替换图片路径
         let $ = cheerio.load(item.summary);
-
-        let imgs = $("img");
-        for (let i = 0; i < imgs.length; i++) {
-            //获取正常的值
-            let source = $(imgs[i]).attr("src");
-            // debugger
-            //如果不是以http开头的尝试获取懒加载地址
-            if (!source.startsWith('http')) {
-                if (source.startsWith("/")) {
-                    //临时解码并提取url中的域名
-                    let domain = (decodeURIComponent(item.link).match(/(\w+):\/\/([^/:]+)(:\d*)?/) as RegExpMatchArray)[0];
-                    source = domain + source;
-                } else {
-                    //处理懒加载
-                    source = $(imgs[i]).attr("data-original");
-                    if (source === undefined) {
-                        source = $(imgs[i]).attr("data-actualsrc");
-                    }
-                }
-            }
-            if (source === undefined) {
-                continue
-            }
-            try {
-                $(imgs[i]).attr("referrerpolicy", null)
-                //获取图片地址
-                let res: IResult = await getImgAddr(source)
-                logger.info(`当前正在解析第${i}张图，地址：${res.link}`)
-                //除去#
-                // @ts-ignore
-                let suffix = res?.type?.split('/')[1]
-                //重新命名
-                let imgName = `${uuid().replaceAll("-", "")}.${suffix}`;
-                //下载图片
-                await download(res.link, `${fpath}/imgs/`, {filename: imgName})
-                $(imgs[i]).attr("src", `file:///${fpath}/imgs/${imgName}`);
-            }catch (e){
-                logger.error(`图片下载失败：${source}`,e)
-            }
-
-
-        }
-
+        //清理HTML
+        let html = Reptile.clearAttrByHtml(Reptile.trimHtml($.html()))
         mkdirsSync(fpath)
-        fs.writeFileSync(`${fpath}/index.html`, $.html()) //文件写入成功。
+        fs.writeFileSync(`${fpath}/index.html`, html) //文件写入成功。
         logger.info(`文章抓取完成：${item.title}`)
+    }
+
+    public static clearAttrByHtml(strText: string) {
+
+        return strText.replace(/\s*\b(style|alt|class|id)=".*?"/ig, '')
+    }
+
+    // 删掉＜style＞＜/style＞＜script＞＜/script＞标签及其内容
+    public static trimHtml(html: string) {
+        return html
+            .replace(/<!--.*?-->/gi, '')
+            .replace(/\/\*.*?\*\//gi, '')
+            .replace(/[ ]+</gi, '<')
+            // .replace(/<script[^]*<\/script>/gi, '')
+            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+            // .replace('/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi', '')
+            // .replace(/(\(function()[^]*)()/gi, '')
+            // .replace(/<style[^]*<\/style>/gi, '');
+            //.replace('/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi', '')
+            .replace(/<style>[\s\S]*?<\/style>/ig, '')
     }
 
     /**

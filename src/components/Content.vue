@@ -2,10 +2,17 @@
 
   <q-card id="content" flat :style="{ 'height': props.winHeight + 'px' }">
 
-    <q-scroll-area ref="scrollArea" style="height: 100%; max-width: 100%;">
+<!--    &lt;!&ndash; 加载动画 &ndash;&gt;-->
+    <q-inner-loading :showing="loading" :label="loadingMessage" style=" background:rgba(232, 232, 233,0.5);hsla(0,100%,80%,0.5);" label-style="font-size:1.1em"/>
+
+
+    <q-scroll-area ref="scrollArea" style="height: 100%; max-width: 100%;" v-if="!loading">
+
+
       <q-card-section v-html="content" v-hljs>
 
       </q-card-section>
+
     </q-scroll-area>
 
 
@@ -15,27 +22,73 @@
 
 <script setup lang="ts">
 // import ArticleList from "@/components/ArticleList.vue";
-import {onMounted, ref} from "vue"
+import {onMounted, ref, getCurrentInstance, computed} from "vue"
 
-import {getConfigPath} from '@/util/common'
-// @ts-ignore
 const {ipcRenderer} = window.require("electron")
-let content = ref<any>()
-let scrollArea = ref<any>(0)
+import {getConfigPath} from '@/util/common'
+import Reptile from "@/reptile";
 
+const cheerio = require("cheerio");
+import {watch} from 'vue'
+//加载动画
+let loading = ref(false)
+let loadingMessage = ref<string>('首次加载需要下载图片，请稍后')
+let content = ref<any>()
+let scrollArea = ref<any>()
+let filePath = ref();
+let articleitem=ref()
 const fs = require("fs")
+
 const props = defineProps({
   winHeight: Number
 })
+watch(articleitem, (value, oldValue, onCleanup) => {
 
-ipcRenderer.on("read-content-done", (ev: any, link: any) => {
-  let fpath = `${getConfigPath()}/list/${link}/index.html`
 
-  content.value = fs.readFileSync(fpath, "utf8")
+
+})
+watch(filePath, async (value, oldValue, onCleanup) => {
+
+  loading.value = true;
+  //这种方式可以
+  if (value === oldValue) {
+    console.log('正在下载。。。。。。')
+    return
+  }
+  console.log('可以更新', value, oldValue)
   document.querySelector("#content")?.scrollTo(0, 0);
-  scrollArea.value.setScrollPosition('vertical', 0)
+  scrollArea.value?.setScrollPosition('vertical', 0)
+//
+  // try {
+  let res = fs.readFileSync(filePath.value, "utf8")
+  let article=articleitem.value
 
+  //重新解析文章，替换img的src
+  let html = await Reptile.parseAndDownloadImg(cheerio.load(res), article.link, article.path, (length: number, index: number) => {
+    loadingMessage.value = `正在下载图片，共 ${length} 张，当前 ${index + 1} 张`
+    if (length === (index + 1)) {
+      count.value = -1
+    } else {
+      count.value++
+    }
+  })
+  console.log('图片下载完成')
+  fs.writeFileSync(filePath.value, html) //文件写入成功。
+  loading.value = false;
+  //   //重写本地文件
+  content.value = html;
+  //
+  // } catch (e) {
+  //   console.log('文件读取失败', e);
+  // }
+})
 
+let count = ref(0)
+ipcRenderer.on("read-content-done", async (ev: any, item: any) => {
+
+  let article = JSON.parse(item);
+  articleitem.value=article
+  filePath.value = `${getConfigPath()}/list/${article.path}/index.html`
 })
 
 
@@ -107,9 +160,9 @@ code
 
 #content
 
-  background: -webkit-linear-gradient(top, transparent 19px, #ececec 20px), -webkit-linear-gradient(left, transparent 19px, #ececec 20px)
-  //background: #cae6ca
-  background-size: 20px 20px
+  //background: -webkit-linear-gradient(top, transparent 19px, #ececec 20px), -webkit-linear-gradient(left, transparent 19px, #ececec 20px)
+  //background: #ecf0f6
+  //background-size: 20px 20px
   font-family: "Open Sans", "Clear Sans", "Helvetica Neue", Helvetica, Arial, sans-serif
   color: rgb(51, 51, 51)
   line-height: 1.6
@@ -154,6 +207,14 @@ code
   /*================表格开始================*/
 
 
+
+
+
+
+
+
+
+
   table:not(.hljs-ln)
     display: table
     // width: 100%
@@ -173,6 +234,14 @@ code
   /*隔行改变行的背景色，如需要请打开*/
 
 
+
+
+
+
+
+
+
+
   table:not(.hljs-ln) tr:nth-child(2n)
     background-color: #f8f8f8
 
@@ -188,12 +257,28 @@ code
   /*表头的属性*/
 
 
+
+
+
+
+
+
+
+
   table:not(.hljs-ln) tr th
     font-weight: bold
     background-color: #f0f0f0
 
 
   /*================表格结束================*/
+
+
+
+
+
+
+
+
 
 
 

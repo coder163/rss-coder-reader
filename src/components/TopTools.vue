@@ -1,5 +1,5 @@
 <template>
-  <q-bar id="win-tool" class="q-electron-drag">
+  <q-bar id="win-tool" class="q-electron-drag" style="background: #ecf0f6 !important;">
     <!--    <div>搜索</div>-->
     <q-space/>
     <q-btn dense flat icon="expand_more" size="md" class="q-electron-drag--exception">
@@ -69,6 +69,6 @@ ipcRenderer.on(ChannelMessage.WINDOW_MAXIMIZE, (event, status) => {
 })
 </script>
 
-<style scoped>
+<style >
 
 </style>

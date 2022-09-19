@@ -14,18 +14,12 @@
             <!--右键菜单-->
             <q-popup-proxy context-menu :target="'#article-list-contextmenu'+index">
               <q-list padding dense style="background:#e8e8e9">
-<!--                <q-item clickable v-ripple v-close-popup @click="favorites(item)">-->
-<!--                  <q-item-section>-->
-<!--                    <q-item-label>加入收藏</q-item-label>-->
-<!--                  </q-item-section>-->
-<!--                </q-item>-->
 
                 <q-item clickable v-ripple v-close-popup @click="copy(item.link)">
                   <q-item-section>
                     <q-item-label>复制链接</q-item-label>
                   </q-item-section>
                 </q-item>
-
                 <q-item clickable v-ripple v-close-popup @click="openInBrowser(item.link)">
                   <q-item-section>
                     <q-item-label>在浏览器中打开</q-item-label>
@@ -48,8 +42,6 @@
 import {onMounted, ref} from "vue";
 import {IArticleItem} from "@/domain/article";
 import ArticleListServiceImpl from "@/service/list";
-import {logger} from "@/util/log/Log4jsConfig";
-
 const {shell} = require('electron');
 
 const {ipcRenderer} = window.require("electron");
@@ -79,7 +71,7 @@ function click(item: IArticleItem) {
 
   // logger.info(item)
   itemId.value = item.id;
-  ipcRenderer.send("read-content", item.path);
+  ipcRenderer.send("read-content", JSON.stringify(item));
 }
 
 /**
@@ -113,24 +105,7 @@ function copy(url: string) {
   clipboard.writeText(url)
 }
 
-/**
- * 加入收藏
- * @param item 收藏项
- */
-// function favorites(item: IArticleItem) {
-//
-//   let articleListService: ArticleListServiceImpl = new ArticleListServiceImpl();
-//   ipcRenderer.send("update-item-list",item.tid)
-//
-//   item.tid = "14"
-//
-//   articleListService.updateSign(item)
-//
-//   //更新侧边栏
-//   ipcRenderer.send("refresh-sub-list")
-//
-//
-// }
+
 </script>
 
 <style scoped>

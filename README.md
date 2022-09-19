@@ -1,6 +1,3 @@
-
-
-
 ## 缓存目录
 
 Linux: $XDG_CACHE_HOME or ~/.cache/electron/
@@ -29,19 +26,6 @@ npm install electron-rebuild --save .\node_modules\.bin\electron-rebuild.cmd
 
 
 
-## TODO
-
-1. 文章内容显示还会出现滚动条(横向)，很难排查具体是什么元素撑开的(文章的样式还待优化)
-
-2. 新增订阅
-
-3. 收藏订阅、文章
-   
-4. 取消订阅 
- 
-5. 文章数据的存储策略
-
-6. 以绝对路径替换 img 标签，在后期移动整个目录会导致图片无法使用
 
 ## 错误记录
 

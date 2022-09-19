@@ -7,31 +7,29 @@ const fs = require("fs")
 import path from "path"
 import {roundEuro} from "@quasar/extras/material-icons-round";
 import {Response} from "request";
-import result, {IResult} from "@/domain/result";
+import {result, IResponseResult, IResult, responseResult} from "@/domain/result";
+import axios from "axios";
+import {ResponseCode} from "@/domain/enum";
+import log from "@/util/log";
 
 // import fs from "fs"
 
 
-export function feedParse(link: string): Promise<any> {
+export async function feedParse(link: string): Promise<IResponseResult> {
     const feedparser = new FeedParser()
 
     let items: any[] = [];
 
-    let optinos = {
+    // 为给定 ID 的 user 创建请求
+
+    request({
         url: link,
-        timeout: 1112000
-    }
-    try {
-        request(optinos).pipe(feedparser);
-    } catch (e) {
-        console.log('抓取失败', e)
-    }
+        timeout: 12000
+    }).pipe(feedparser)
 
 
     return new Promise((resolve, reject) => {
         feedparser.on('readable', function () {
-
-
             let item
             while ((item = feedparser.read())) {
                 items.push(item)
@@ -39,10 +37,18 @@ export function feedParse(link: string): Promise<any> {
         })
 
         feedparser.on('end', () => {
-            resolve(items)
+
+            responseResult.code = ResponseCode.SUCCESS;
+
+            responseResult.data = items;
+
+            resolve(responseResult)
+
         })
         feedparser.on('error', (err: any) => {
-            reject(err)
+            responseResult.code = ResponseCode.FAIL;
+            responseResult.message = err.message;
+            reject(responseResult)
         })
     })
 
@@ -70,6 +76,7 @@ export function mkdirsSync(dirname: string) {
 const rimraf = require('rimraf');
 
 export function delDirSync(url: string) {
+    log.info(`删除【${url}】`)
     rimraf(url, function (err: any) { // 删除当前目录下的 test.txt
         if (err) {
             console.log(err);
@@ -82,7 +89,7 @@ export function delDirSync(url: string) {
  * 状态码302时获取图片地址
  * @param link
  */
-export async function getImgAddr(link: string):Promise<IResult> {
+export async function getImgAddr(link: string): Promise<IResult> {
     var options = {
         timeout: 130000,
         url: link,
@@ -102,7 +109,7 @@ export async function getImgAddr(link: string):Promise<IResult> {
                     reject('获取图片真实地址失败')
                     return
                 }
-                console.log(response.statusCode, link)
+                // console.log(response.statusCode, link)
                 if (response.statusCode === 301 || response.statusCode === 302) {
                     getImgAddr(response.headers.location).then((result) => {
 
@@ -119,7 +126,7 @@ export async function getImgAddr(link: string):Promise<IResult> {
                     resolve(result)
                     return
                 }
-            }catch (e){
+            } catch (e) {
                 logger.info('获取图片真实地址失败')
             }
 

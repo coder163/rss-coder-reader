@@ -16,7 +16,7 @@ function Message(mainWindow: BrowserWindow, type: Number, data?: any) {
     }
     mainWindow.webContents.send('UpdateMsg', senddata)
 }
-
+const path=require('path')
 // 更新应用的方法
 export default (mainWindow: BrowserWindow) => {
     // log.info('%cRed text. %cGreen text', 'color: red', 'color: green')
@@ -24,6 +24,7 @@ export default (mainWindow: BrowserWindow) => {
     autoUpdater.autoDownload = false
     //设置版本更新地址，即将打包后的latest.yml文件和exe文件同时放在
     // autoUpdater.setFeedURL('http://localhost:10086/public')
+
     // 当更新发生错误的时候触发。
     autoUpdater.on('error', (err: any) => {
         log.log(err)
@@ -46,7 +47,7 @@ export default (mainWindow: BrowserWindow) => {
     })
     // 下载监听
     autoUpdater.on('download-progress', (progressObj: any) => {
-        log.log('download-progress', '下载监听', progressObj)
+        log.log('download-progress', '下载监听')
         Message(mainWindow, 3, progressObj)
     })
     // 下载完成

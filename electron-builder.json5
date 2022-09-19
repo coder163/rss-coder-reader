@@ -6,8 +6,8 @@
   "publish": [
     {
       "provider": "generic",
-      "url": "http://127.0.0.1:10086/public",
-      //更新服务器地址,可为空
+      "url": "https://coder163.com/rss-reader",
+
     }
   ],
 //  "publish": {
@@ -19,7 +19,7 @@
   "appId": "com.coder163",
   "productName": "猿阅",//项目名，也是生成的安装文件名，即aDemo.exe
   "copyright": "Copyright © 2022",//版权信息
-  "asar": true,
+  "asar": false,
   "directories": {
     "output": "release/${version}"
   },
@@ -62,5 +62,6 @@
     "perMachine": false,
     "allowToChangeInstallationDirectory": true,
     "deleteAppDataOnUninstall": false,
+
   }
 }

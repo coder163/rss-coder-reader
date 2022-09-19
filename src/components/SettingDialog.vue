@@ -67,7 +67,7 @@
         </q-tab-panel>
         <!-- 第3个选项卡start -->
         <q-tab-panel name="movies">
-          <q-img src="/all.png" no-native-menu></q-img>
+          <q-img :src="all"/>
         </q-tab-panel>
       </q-tab-panels>
 
@@ -80,12 +80,14 @@
 </template>
 
 <script setup lang="ts">
+import all from '@/assets/all.png'
+
 import {onMounted, ref, watch} from "vue";
 import TreeServiceImpl from '@/service/source'
 import SourceServiceImpl from '@/service/source'
 import NodeOption from '@/domain/node'
 import Reptile from "@/reptile";
-import {ChannelMessage, SubscriptionType} from "@/domain/enum";
+import {ChannelMessage, ResponseCode, SubscriptionType} from "@/domain/enum";
 import {feedParse, getUuid} from "@/util/common";
 import {logger} from "@/util/log/Log4jsConfig";
 
@@ -138,53 +140,59 @@ let sourceService: SourceServiceImpl = new SourceServiceImpl();
 
 async function subTitleFocus() {
 
-  try {
-    //订阅源
-    NodeOption.link = subText.value
-    //开始解析
-    loading.value = true;
-    //订阅入库
-    let feeds = await feedParse(NodeOption.link)
-    //解析失败
-    if (feeds.length <= 0) {
-      loading.value = false;
-      return;
-    }
-
-    if (subTitle.value === '' || subTitle.value === undefined) {
-      subTitle.value = feeds[0].meta.title
-    }
-
-    //订阅名称
-    NodeOption.label = subTitle.value
-    if (subClassify.value !== undefined) {
-      //获取当前选择节点
-      // let optionValue=qselect.value.getOptionValue(subClassify.value);
-      //父节点id
-      NodeOption.pid = subClassify.value.id
-      //订阅类型：订阅
-      NodeOption.type = SubscriptionType.SUBSCRIPTION
-    } else {
-      //订阅类型为未分类
-      NodeOption.type = SubscriptionType.UNCATEGORIZED
-    }
-    NodeOption.id = getUuid()
-
-
-    //订阅入库
-    sourceService.insert(NodeOption)
-
-    //解析入库
-    await Reptile.parseItem(NodeOption.link, NodeOption.id, feeds)
-    //刷新列表
-    ipcRenderer.send("refresh-sub-list")
-  } catch (e) {
-    logger.error(e)
-  } finally {
-    //解析完成
+  // try {
+  //订阅源
+  NodeOption.link = subText.value
+  //开始解析
+  loading.value = true;
+  //订阅入库
+  let response = await feedParse(NodeOption.link)
+  //解析失败
+  if (response.code === ResponseCode.FAIL) {
     loading.value = false;
+    return;
   }
+  let feeds = response.data;
+  console.log(feeds)
+  if (subTitle.value === '' || subTitle.value === undefined) {
+    subTitle.value = feeds[0].meta.title
+  }
+  //订阅名称
+  NodeOption.label = subTitle.value
+  if (subClassify.value !== undefined) {
+    //获取当前选择节点
+    // let optionValue=qselect.value.getOptionValue(subClassify.value);
+    //父节点id
+    NodeOption.pid = subClassify.value.id
+    //订阅类型：订阅
+    NodeOption.type = SubscriptionType.SUBSCRIPTION
+  } else {
+    //订阅类型为未分类
+    NodeOption.type = SubscriptionType.UNCATEGORIZED
+  }
+  NodeOption.id = getUuid()
 
-  // dialogStatus.value = false;
+
+  //订阅入库
+  sourceService.insert(NodeOption)
+    //解析入库
+  await Reptile.parseItem(NodeOption.link, NodeOption.id, feeds)
+  //刷新列表
+  ipcRenderer.send("refresh-sub-list")
+  //刷新列表
+  ipcRenderer.send("refresh-sub-list")
+  loading.value = false;
+  dialogStatus.value = false;
+
+
+  //
+
+  // } catch (e) {
+  //   logger.error(e)
+  // } finally {
+  //   //解析完成
+  //   loading.value = false;
+  // }
+
 }
 </script>

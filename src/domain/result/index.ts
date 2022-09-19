@@ -8,5 +8,20 @@ let result: IResult = {
 
 }
 
+export interface IResponseResult {
+    code: number,
+    message: string;
+    data: any
+}
 
-export default result
+let responseResult: IResponseResult = {
+    code: 0, data: undefined, message: ""
+
+}
+
+export {
+    result,
+    responseResult,
+};
+
+// export default result
