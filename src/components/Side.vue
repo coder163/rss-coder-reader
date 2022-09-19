@@ -14,7 +14,7 @@
       <q-card-section>
         <q-list>
           <!-- 分类管理 -->
-          <q-expansion-item  :id="'classify' + (index)" v-for="(sub, index) in subs" default-opened dense :label="sub.label">
+          <q-expansion-item :id="'classify' + (index)" v-for="(sub, index) in subs" default-opened dense :label="sub.label">
             <!-- 右键菜单绑定到指定元素 -->
             <q-popup-proxy context-menu :target="'#classify' + index">
 
@@ -40,7 +40,7 @@
             <!-- 订阅管理 -->
             <q-list padding dense>
 
-              <q-item header-inset-level="1" :id="'sub' + ch.id" clickable v-ripple :inset-level="0" v-for=" ch in sub.children" @click="click(ch)" :active="ch.id === itemId" >
+              <q-item header-inset-level="1" :id="'sub' + ch.id" clickable v-ripple :inset-level="0" v-for=" ch in sub.children" @click="click(ch)" :active="ch.id === itemId">
                 <!-- 右键菜单绑定到指定元素 -->
                 <q-popup-proxy context-menu :target="'#sub' + ch.id">
 
@@ -80,7 +80,6 @@
 
       </q-card-section>
     </q-scroll-area>
-
 
 
   </q-card>
@@ -179,6 +178,7 @@ import NodeOption, {INodeOption} from '@/domain/node'
 import {delDirSync, feedParse, getConfigPath, getUuid} from '@/util/common'
 import Reptile from '@/reptile'
 import {SubscriptionType} from "@/domain/enum";
+import log from "@/util/log";
 
 const {ipcRenderer} = window.require("electron");
 
@@ -216,10 +216,10 @@ let articleListService: ArticleListServiceImpl = new ArticleListServiceImpl()
 let treeServiceImpl: TreeServiceImpl = new TreeServiceImpl()
 
 
-onMounted(async () => {
-  subs.value = await treeServiceImpl.listAllNodeWithType("0", 0);
-
-
+onMounted(() => {
+  treeServiceImpl.listAllNodeWithType("0", 0).then((res) => {
+    subs.value = res
+  });
 });
 //订阅列表
 ipcRenderer.on('refresh-sub-list-done', async () => {
@@ -257,9 +257,10 @@ async function updateSub() {
   subs.value = await treeServiceImpl.listAllNodeWithType("0", 0);
 }
 
-let itemId=ref()
+let itemId = ref()
+
 function click(info: any) {
-  itemId.value=info.id;
+  itemId.value = info.id;
   //通知主线程
   ipcRenderer.send("update-item-list", info.id);
 }
@@ -293,7 +294,7 @@ async function renameClassify() {
  * 删除分类
  */
 function classifyDelDialog(ev: MouseEvent, item: INodeOption) {
-  message.value = `此操作会删除【${item.label}】分类下所有订阅和未收藏文件`
+  message.value = `此操作会删除【${item.label}】分类下所有订阅`
   currentClassify.value = item;
   dialogConfirm.value = true
   //分类删除
@@ -304,9 +305,15 @@ function classifyDelDialog(ev: MouseEvent, item: INodeOption) {
  * 更新订阅(单个)
  */
 async function subUpdateDialog(ev: MouseEvent, item: INodeOption) {
-  let feeds = await feedParse(item.link);
+  await feedParse(item.link).then((resp) => {
+    Reptile.parseItem(item.link, item.pid, resp.data).catch((err) => {
+      log.error(err,message)
+    })
+  }).catch((err) => {
+    log.error(err.message)
+  });
 
-  Reptile.parseItem(item.link, item.pid, feeds)
+
 }
 
 /**
@@ -317,7 +324,7 @@ async function subRenameDialog(ev: MouseEvent, item: INodeOption) {
   subText.value = item.link
   subTitle.value = item.label
   subId.value = item.id
- subClassify.value= (await treeServiceImpl.findByid(item.pid)).label
+  subClassify.value = (await treeServiceImpl.findByid(item.pid)).label
   currentClassify.value = item;
 
 }

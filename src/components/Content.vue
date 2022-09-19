@@ -2,7 +2,7 @@
 
   <q-card id="content" flat :style="{ 'height': props.winHeight + 'px' }">
 
-<!--    &lt;!&ndash; 加载动画 &ndash;&gt;-->
+    <!--    &lt;!&ndash; 加载动画 &ndash;&gt;-->
     <q-inner-loading :showing="loading" :label="loadingMessage" style=" background:rgba(232, 232, 233,0.5);hsla(0,100%,80%,0.5);" label-style="font-size:1.1em"/>
 
 
@@ -30,13 +30,14 @@ import Reptile from "@/reptile";
 
 const cheerio = require("cheerio");
 import {watch} from 'vue'
+import log from "@/util/log";
 //加载动画
 let loading = ref(false)
-let loadingMessage = ref<string>('首次加载需要下载图片，请稍后')
+let loadingMessage = ref<string>('首次加载需要下载图片，请稍后。。。')
 let content = ref<any>()
 let scrollArea = ref<any>()
 let filePath = ref();
-let articleitem=ref()
+let articleitem = ref()
 const fs = require("fs")
 
 const props = defineProps({
@@ -45,49 +46,56 @@ const props = defineProps({
 watch(articleitem, (value, oldValue, onCleanup) => {
 
 
-
 })
 watch(filePath, async (value, oldValue, onCleanup) => {
-
   loading.value = true;
   //这种方式可以
   if (value === oldValue) {
-    console.log('正在下载。。。。。。')
+    log.info('路径无变化，同一个文件');
     return
   }
-  console.log('可以更新', value, oldValue)
+
   document.querySelector("#content")?.scrollTo(0, 0);
   scrollArea.value?.setScrollPosition('vertical', 0)
-//
-  // try {
-  let res = fs.readFileSync(filePath.value, "utf8")
-  let article=articleitem.value
-
-  //重新解析文章，替换img的src
-  let html = await Reptile.parseAndDownloadImg(cheerio.load(res), article.link, article.path, (length: number, index: number) => {
-    loadingMessage.value = `正在下载图片，共 ${length} 张，当前 ${index + 1} 张`
-    if (length === (index + 1)) {
-      count.value = -1
-    } else {
-      count.value++
+  fs.readFile(filePath.value, "utf8", (err: NodeJS.ErrnoException | null, data: string) => {
+    if (err) {
+      //防止读取失败依然加载
+      loading.value = false;
+      log.error(err.message)
+      return
     }
+    let article = articleitem.value
+    //是否需要重新写入文件，如果图片变动，并做了替换
+    let write=false
+
+    // //重新解析文章，替换img的src
+    Reptile.parseAndDownloadImg(cheerio.load(data), article.link, article.path, (length: number, index: number,isWrite:boolean) => {
+      loadingMessage.value = `正在缓存图片至本地，共 ${length} 张 当前 ${index + 1} 张，请稍后`
+
+      write=isWrite;
+    }).then((resp) => {
+      loading.value = false;
+      content.value = resp;
+      if(write){
+        log.info(`图片解析完成，重写入文件${write}`)
+        //重写本地文件
+        fs.writeFileSync(filePath.value, resp)
+      }
+
+    }).catch((e) => {
+      log.error(e)
+    })
+
+
   })
-  console.log('图片下载完成')
-  fs.writeFileSync(filePath.value, html) //文件写入成功。
-  loading.value = false;
-  //   //重写本地文件
-  content.value = html;
-  //
-  // } catch (e) {
-  //   console.log('文件读取失败', e);
-  // }
+
+
 })
 
-let count = ref(0)
 ipcRenderer.on("read-content-done", async (ev: any, item: any) => {
 
   let article = JSON.parse(item);
-  articleitem.value=article
+  articleitem.value = article
   filePath.value = `${getConfigPath()}/list/${article.path}/index.html`
 })
 
@@ -215,6 +223,10 @@ code
 
 
 
+
+
+
+
   table:not(.hljs-ln)
     display: table
     // width: 100%
@@ -232,6 +244,10 @@ code
 
 
   /*隔行改变行的背景色，如需要请打开*/
+
+
+
+
 
 
 
@@ -265,12 +281,20 @@ code
 
 
 
+
+
+
+
   table:not(.hljs-ln) tr th
     font-weight: bold
     background-color: #f0f0f0
 
 
   /*================表格结束================*/
+
+
+
+
 
 
 

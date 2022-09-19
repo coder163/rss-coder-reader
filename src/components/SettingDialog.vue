@@ -90,6 +90,7 @@ import Reptile from "@/reptile";
 import {ChannelMessage, ResponseCode, SubscriptionType} from "@/domain/enum";
 import {feedParse, getUuid} from "@/util/common";
 import {logger} from "@/util/log/Log4jsConfig";
+import log from "@/util/log";
 
 const {ipcRenderer} = window.require("electron");
 
@@ -127,6 +128,7 @@ watch(dialogStatus, async (newVal, oldVal) => {
   if (!oldVal) {
     subs.value = await treeServiceImpl.listAllNodeWithType('0', 0);
   }
+  subTitle.value = ''
 });
 ipcRenderer.on(ChannelMessage.APP_SETTINGS_DIALOG_DONE, () => {
   dialogStatus.value = true
@@ -146,53 +148,42 @@ async function subTitleFocus() {
   //开始解析
   loading.value = true;
   //订阅入库
-  let response = await feedParse(NodeOption.link)
-  //解析失败
-  if (response.code === ResponseCode.FAIL) {
-    loading.value = false;
-    return;
-  }
-  let feeds = response.data;
-  console.log(feeds)
-  if (subTitle.value === '' || subTitle.value === undefined) {
-    subTitle.value = feeds[0].meta.title
-  }
-  //订阅名称
-  NodeOption.label = subTitle.value
-  if (subClassify.value !== undefined) {
-    //获取当前选择节点
-    // let optionValue=qselect.value.getOptionValue(subClassify.value);
-    //父节点id
-    NodeOption.pid = subClassify.value.id
-    //订阅类型：订阅
-    NodeOption.type = SubscriptionType.SUBSCRIPTION
-  } else {
-    //订阅类型为未分类
-    NodeOption.type = SubscriptionType.UNCATEGORIZED
-  }
-  NodeOption.id = getUuid()
-
-
-  //订阅入库
-  sourceService.insert(NodeOption)
+  let response = await feedParse(NodeOption.link).then((response) => {
+    let feeds = response.data;
+    if (subTitle.value === '' || subTitle.value === undefined) {
+      subTitle.value = feeds[0].meta.title
+    }
+    //订阅名称
+    NodeOption.label = subTitle.value
+    if (subClassify.value !== undefined) {
+      //获取当前选择节点
+      // let optionValue=qselect.value.getOptionValue(subClassify.value);
+      //父节点id
+      NodeOption.pid = subClassify.value.id
+      //订阅类型：订阅
+      NodeOption.type = SubscriptionType.SUBSCRIPTION
+    } else {
+      //订阅类型为未分类
+      NodeOption.type = SubscriptionType.UNCATEGORIZED
+    }
+    NodeOption.id = getUuid()
+    //订阅入库
+    sourceService.insert(NodeOption)
     //解析入库
-  await Reptile.parseItem(NodeOption.link, NodeOption.id, feeds)
-  //刷新列表
-  ipcRenderer.send("refresh-sub-list")
-  //刷新列表
-  ipcRenderer.send("refresh-sub-list")
-  loading.value = false;
-  dialogStatus.value = false;
+    Reptile.parseItem(NodeOption.link, NodeOption.id, feeds).then(() => {
+      //刷新列表
+      ipcRenderer.send("refresh-sub-list")
+      //刷新列表
+      ipcRenderer.send("refresh-sub-list")
+      loading.value = false;
+      dialogStatus.value = false;
+    })
 
+  }).catch((e) => {
+    log.error(`解析失败：${NodeOption.link}，错误描述${e}`)
+    loading.value = false;
+  })
 
-  //
-
-  // } catch (e) {
-  //   logger.error(e)
-  // } finally {
-  //   //解析完成
-  //   loading.value = false;
-  // }
 
 }
 </script>

@@ -1,8 +1,8 @@
 import {autoUpdater} from 'electron-updater'
 import {ipcMain, BrowserWindow, dialog} from 'electron'
 
-// @ts-ignore
-import log from "../../src/util/log";
+import log from "../../util/log";
+
 
 /**
  * -1 检查更新失败 0 正在检查更新 1 检测到新版本，准备下载 2 未检测到新版本 3 下载中 4 下载完成
@@ -19,7 +19,6 @@ function Message(mainWindow: BrowserWindow, type: Number, data?: any) {
 const path=require('path')
 // 更新应用的方法
 export default (mainWindow: BrowserWindow) => {
-    // log.info('%cRed text. %cGreen text', 'color: red', 'color: green')
     // 在下载之前将autoUpdater的autoDownload属性设置成false，通过渲染进程触发主进程事件来实现这一设置(将自动更新设置成false)
     autoUpdater.autoDownload = false
     //设置版本更新地址，即将打包后的latest.yml文件和exe文件同时放在

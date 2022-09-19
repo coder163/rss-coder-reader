@@ -1,11 +1,11 @@
 import TreeServiceImpl from "../service/source";
-import {getConfigPath, getDateString, getImgAddr, getUuid, mkdirsSync} from '../util/common'
+import {getConfigPath, getDateString, getImgAddr, getUuid, mkdirsSync} from '@/util/common'
 import ArticleListServiceImpl from "../service/list";
 import {ArticleItem, IArticleItem} from "@/domain/article";
 import {ArticleServiceImpl} from "@/service/article";
-import {SubscriptionType} from "@/domain/enum";
-import {logger} from "@/util/log/Log4jsConfig";
-import {IResult} from "@/domain/result";
+import {ResponseCode, SubscriptionType} from "@/domain/enum";
+import {IResponseResult, IResult} from "@/domain/result";
+import log from "@/util/log";
 
 const fs = require("fs")
 
@@ -21,17 +21,21 @@ let asi = new ArticleServiceImpl()
 const download = require('download')
 export default class Reptile {
 
-    public static async parseAndDownloadImg($: any, link: string, path: string,cb:Function): Promise<string> {
+    public static async parseAndDownloadImg($: any, link: string, path: string, cb: Function): Promise<string> {
         let fpath = `${getConfigPath()}/list/${path}`
-        console.log(fpath)
         let imgs = $("img");
+        let isWrite = false;
         return new Promise(async (resolve, reject) => {
             for (let i = 0; i < imgs.length; i++) {
+                cb(imgs.length, i, isWrite)
                 //获取正常的值
                 let source = $(imgs[i]).attr("src");
                 if (source.startsWith('file:///')) {
                     continue
                 }
+                //执行到此处表示存在非file协议的图片路径
+                isWrite = true;
+
                 // debugger
                 //如果不是以http开头的尝试获取懒加载地址
                 if (!source.startsWith('http')) {
@@ -50,27 +54,28 @@ export default class Reptile {
                 if (source === undefined) {
                     continue
                 }
-                try {
-                    $(imgs[i]).attr("referrerpolicy", null)
-                    //获取图片地址
-                    let res: IResult = await getImgAddr(source)
-                    logger.info(`当前正在解析第${i}张图，地址：${res.link}`)
+                $(imgs[i]).attr("referrerpolicy", null)
 
-                    //除去#
+                try {
+                    //获取图片地址
+                    let res: IResponseResult = await getImgAddr(source)
+                    if (res.code === ResponseCode.FAIL) {
+                        log.error(`图片地址获取失败`)
+                    }
                     // @ts-ignore
                     let suffix = res?.type?.split('/')[1]
                     //重新命名
                     let imgName = `${uuid().replaceAll("-", "")}.${suffix}`;
                     //下载图片
-                    await download(res.link, `${fpath}/imgs/`, {
+                    await download(res.data.link, `${fpath}/imgs/`, {
                         filename: imgName,
-                        timeout:25000
+                        timeout: 500
                     })
+                    log.info(`当前正在解析第${i}张图，地址：${res.data.link}`)
                     $(imgs[i]).attr("src", `file:///${fpath}/imgs/${imgName}`);
-                } catch (e) {
-                    logger.error(`图片下载失败：${source}`, e)
-                }finally {
-                    cb(imgs.length,i)
+
+                } catch (e: any) {
+                    log.error(`图片下载失败...：${e.message}`)
                 }
 
 
@@ -92,12 +97,12 @@ export default class Reptile {
         let html = Reptile.clearAttrByHtml(Reptile.trimHtml($.html()))
         mkdirsSync(fpath)
         fs.writeFileSync(`${fpath}/index.html`, html) //文件写入成功。
-        logger.info(`文章抓取完成：${item.title}`)
+        log.info(`文章抓取完成：${item.title}`)
     }
 
     public static clearAttrByHtml(strText: string) {
 
-        return strText.replace(/\s*\b(style|alt|class|id)=".*?"/ig, '')
+        return strText.replace(/\s*\b(style|alt|class|id|loading)=".*?"/ig, '')
     }
 
     // 删掉＜style＞＜/style＞＜script＞＜/script＞标签及其内容
@@ -127,18 +132,17 @@ export default class Reptile {
             //解析feed
             // let feed = await feedParse(link);
             for (let index = 0; index < feeds.length; index++) {
-                logger.info(`当前文章${feeds[index].title}, ${feeds[index].link} `)
+
                 //需要校验该文章是否已经存在，不存在再入库
-                // let count = await alsi.countByTitle(feeds[index.ts].title.replace(/\s*!/g, ""));
-                //
-                // if (count.cunt > 0) {
-                //     console.log(`当前文章已经存在：${count.cunt},地址：${feeds[index.ts].link}`)
-                //     continue;
-                // }
+                let count = await alsi.countByTitle(feeds[index].title.replace(/\s*!/g, ""));
+                if (count.cunt > 0) {
+                    console.log(`当前文章已经存在：${count.cunt},地址：${feeds[index].link}`)
+                    continue;
+                }
+                log.info(`当前文章${feeds[index].title}, ${feeds[index].link} `)
                 await Reptile.warehousing(feeds[index], tid)
             }
 
-            logger.info(`所有文章抓取完成,共 ${feeds.length} 篇`)
         } catch (e) {
             console.log('抓取失败', e)
         }
@@ -162,7 +166,7 @@ export default class Reptile {
         ArticleItem.sign = SubscriptionType.SUBSCRIPTION
         ArticleItem.updateTime = getDateString()
         alsi.insert(ArticleItem)
-        logger.info(`解析入库${ArticleItem.title}`)
+        log.info(`解析入库${ArticleItem.title}`)
         //摘要不入库(太大了)
         ArticleItem.summary = item.description
         //爬取文章正文，入库

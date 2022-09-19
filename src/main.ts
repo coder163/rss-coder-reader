@@ -23,6 +23,10 @@ import {lineNumbersBlock} from "./util/highlight-line-number";
 //@ts-ignore
 import CopyButtonPlugin from './util/highlightjs-copy'
 
+hljs.configure({
+    //关闭xss攻击的警告(存在未转义的HTML标签)
+    ignoreUnescapedHTML:true
+})
 hljs.addPlugin(new CopyButtonPlugin({}));
 
 
