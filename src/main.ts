@@ -43,9 +43,15 @@ app.directive('hljs', el => {
     })
 
 });
-
+const {shell} = require('electron');
+//@ts-ignore
+window.openExternal=(url:string)=>{
+    shell.openExternal(url);
+}
 
 import store from './store'
+
+
 
 app.use(store)
 

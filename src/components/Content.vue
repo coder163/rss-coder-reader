@@ -23,7 +23,6 @@
 <script setup lang="ts">
 // import ArticleList from "@/components/ArticleList.vue";
 import {onMounted, ref, getCurrentInstance, computed} from "vue"
-
 const {ipcRenderer} = window.require("electron")
 import {getConfigPath} from '@/util/common'
 import Reptile from "@/reptile";
@@ -31,6 +30,7 @@ import Reptile from "@/reptile";
 const cheerio = require("cheerio");
 import {watch} from 'vue'
 import log from "@/util/log";
+
 //加载动画
 let loading = ref(false)
 let loadingMessage = ref<string>('首次加载需要下载图片，请稍后。。。')
@@ -66,17 +66,16 @@ watch(filePath, async (value, oldValue, onCleanup) => {
     }
     let article = articleitem.value
     //是否需要重新写入文件，如果图片变动，并做了替换
-    let write=false
+    let write = false
 
     // //重新解析文章，替换img的src
-    Reptile.parseAndDownloadImg(cheerio.load(data), article.link, article.path, (length: number, index: number,isWrite:boolean) => {
+    Reptile.parseAndDownloadImg(cheerio.load(data), article.link, article.path, (length: number, index: number, isWrite: boolean) => {
       loadingMessage.value = `正在缓存图片至本地，共 ${length} 张 当前 ${index + 1} 张，请稍后`
-
-      write=isWrite;
+      write = isWrite;
     }).then((resp) => {
       loading.value = false;
       content.value = resp;
-      if(write){
+      if (write) {
         log.info(`图片解析完成，重写入文件${write}`)
         //重写本地文件
         fs.writeFileSync(filePath.value, resp)
@@ -103,6 +102,7 @@ ipcRenderer.on("read-content-done", async (ev: any, item: any) => {
 onMounted(() => {
   content.value = fs.readFileSync(`${getConfigPath()}/index/index.html`, "utf8")
 });
+
 </script>
 
 <style lang="sass">
@@ -227,6 +227,8 @@ code
 
 
 
+
+
   table:not(.hljs-ln)
     display: table
     // width: 100%
@@ -244,6 +246,8 @@ code
 
 
   /*隔行改变行的背景色，如需要请打开*/
+
+
 
 
 
@@ -285,12 +289,16 @@ code
 
 
 
+
+
   table:not(.hljs-ln) tr th
     font-weight: bold
     background-color: #f0f0f0
 
 
   /*================表格结束================*/
+
+
 
 
 

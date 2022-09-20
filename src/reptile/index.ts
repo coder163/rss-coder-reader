@@ -71,7 +71,7 @@ export default class Reptile {
                         filename: imgName,
                         timeout: 500
                     })
-                    log.info(`当前正在解析第${i}张图，地址：${res.data.link}`)
+                    log.info(`当前正在解析第${i + 1}张图，地址：${res.data.link}`)
                     $(imgs[i]).attr("src", `file:///${fpath}/imgs/${imgName}`);
 
                 } catch (e: any) {
@@ -93,12 +93,23 @@ export default class Reptile {
         mkdirsSync(`${fpath}/imgs`)
         //解析并替换图片路径
         let $ = cheerio.load(item.summary);
+
+
+        for (const element of $("a")) {
+            //'javascript':openExternal(${$(element).attr('href')})
+            $(element).attr('target',null)
+            $(element).attr('href',`javascript:openExternal('${$(element).attr('href')}')`)
+        }
+
         //清理HTML
         let html = Reptile.clearAttrByHtml(Reptile.trimHtml($.html()))
+
         mkdirsSync(fpath)
         fs.writeFileSync(`${fpath}/index.html`, html) //文件写入成功。
         log.info(`文章抓取完成：${item.title}`)
     }
+
+
 
     public static clearAttrByHtml(strText: string) {
 

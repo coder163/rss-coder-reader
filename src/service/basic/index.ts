@@ -10,8 +10,6 @@ export default class BasicServiceImpl {
     private database = new sqlite3.Database(`${getConfigPath()}/articles.db`)
 
     public getDatabase(): any {
-
-        log.info(this.database())
         return this.database;
     }
 
