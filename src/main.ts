@@ -1,6 +1,7 @@
 import {createApp} from 'vue'
 import App from './App.vue'
-
+//[Violation] Added non-passive event listener to a scroll-blocking 'mousewheel' event. Consider marking event handler as 'passive' to make the page more responsive.
+import 'default-passive-events'
 const app = createApp(App);
 // import { Quasar } from 'quasar'
 
@@ -25,7 +26,7 @@ import CopyButtonPlugin from './util/highlightjs-copy'
 
 hljs.configure({
     //关闭xss攻击的警告(存在未转义的HTML标签)
-    ignoreUnescapedHTML:true
+    ignoreUnescapedHTML: true
 })
 hljs.addPlugin(new CopyButtonPlugin({}));
 
@@ -45,13 +46,14 @@ app.directive('hljs', el => {
 });
 const {shell} = require('electron');
 //@ts-ignore
-window.openExternal=(url:string)=>{
+window.openExternal = (url: string) => {
     shell.openExternal(url);
 }
 
 import store from './store'
+import instance from "@/util/api";
 
-
+app.config.globalProperties.$axios = instance
 
 app.use(store)
 

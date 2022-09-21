@@ -180,7 +180,7 @@ async function subTitleFocus() {
     })
 
   }).catch((e) => {
-    log.error(`解析失败：${NodeOption.link}，错误描述${e}`)
+    log.error(`解析失败：${NodeOption.link}，错误描述${e.message}`)
     loading.value = false;
   })
 

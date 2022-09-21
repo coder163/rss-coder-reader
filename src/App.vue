@@ -7,15 +7,18 @@
     <div class="side" :style="{ display: isHide }">
 
       <q-bar class="q-electron-drag" style="background-color:#ecf0f6;">
-        <img src="@/assets/logo.png" />
-        <div>猿阅</div>
-        <q-space />
+<!--        <q-btn flat class="q-electron-drag&#45;&#45;exception">-->
+          <img src="@/assets/logo.png" class="q-electron-drag--exception"/>
+          &nbsp;
+          猿阅
+<!--        </q-btn>-->
+        <q-space/>
       </q-bar>
       <side></side>
     </div>
     <!-- 主体内容 -->
     <div class="main-container">
-      <top-tools />
+      <top-tools/>
       <q-splitter v-model="splitterModel" :limits="[20, 95]">
         <template v-slot:before>
           <!-- 文章列表 -->
@@ -28,13 +31,13 @@
       </q-splitter>
     </div>
   </div>
-  <setting-dialog />
-  <update />
+  <setting-dialog/>
+  <update/>
 
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from "vue";
+import {onMounted, ref, computed,getCurrentInstance} from "vue";
 import ArticleList from "@/components/ArticleList.vue";
 import Content from "@/components/Content.vue";
 import Side from "./components/Side.vue";
@@ -42,7 +45,7 @@ import Update from "@/components/Update.vue";
 import TopTools from "@/components/TopTools.vue";
 import SettingDialog from "@/components/SettingDialog.vue";
 
-const { ipcRenderer } = window.require("electron");
+const {ipcRenderer} = window.require("electron");
 let splitterModel = ref(25) // start at 50%
 
 let winHeight = ref<number>(document.documentElement.clientHeight);
@@ -67,13 +70,19 @@ ipcRenderer.on("key-event-l", (ev) => {
 });
 
 onMounted(() => {
+
+  const $axios =getCurrentInstance()?.appContext.config.globalProperties.$axios ;
+
+  // $axios.get('https://rsshub.app/csdn/blog/csdngeeknews').then((response:any)=>{
+  //   console.log(response.data)
+  // })
   //获取窗口大小，指定高度
   window.addEventListener(
-    "resize",
-    function () {
-      winHeight.value = document.documentElement.clientHeight;
-    },
-    false
+      "resize",
+      function () {
+        winHeight.value = document.documentElement.clientHeight;
+      },
+      false
   );
 });
 
@@ -96,8 +105,7 @@ onMounted(() => {
 }
 
 
-
-.q-bar--standard>div {
+.q-bar--standard > div {
   font-weight: 400;
   font-size: 14px !important;
 }

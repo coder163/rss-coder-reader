@@ -23,6 +23,7 @@
 <script setup lang="ts">
 // import ArticleList from "@/components/ArticleList.vue";
 import {onMounted, ref, getCurrentInstance, computed} from "vue"
+
 const {ipcRenderer} = window.require("electron")
 import {getConfigPath} from '@/util/common'
 import Reptile from "@/reptile";
@@ -57,34 +58,27 @@ watch(filePath, async (value, oldValue, onCleanup) => {
 
   document.querySelector("#content")?.scrollTo(0, 0);
   scrollArea.value?.setScrollPosition('vertical', 0)
-  fs.readFile(filePath.value, "utf8", (err: NodeJS.ErrnoException | null, data: string) => {
+  fs.readFile(filePath.value, "utf8", async (err: NodeJS.ErrnoException | null, data: string) => {
     if (err) {
       //防止读取失败依然加载
       loading.value = false;
       log.error(err.message)
       return
     }
-    let article = articleitem.value
-    //是否需要重新写入文件，如果图片变动，并做了替换
-    let write = false
-
     // //重新解析文章，替换img的src
-    Reptile.parseAndDownloadImg(cheerio.load(data), article.link, article.path, (length: number, index: number, isWrite: boolean) => {
-      loadingMessage.value = `正在缓存图片至本地，共 ${length} 张 当前 ${index + 1} 张，请稍后`
-      write = isWrite;
-    }).then((resp) => {
-      loading.value = false;
-      content.value = resp;
-      if (write) {
-        log.info(`图片解析完成，重写入文件${write}`)
-        //重写本地文件
-        fs.writeFileSync(filePath.value, resp)
+    Reptile.downloadImg(cheerio.load(data), articleitem.value.link, articleitem.value.path, (length: number, index: number, html: string, mark: string) => {
+      loadingMessage.value = `正在缓存图片至本地，${length}/${index + 1} ，请稍后`
+      if ((length === (index + 1)) && (mark !== 'local')) {
+        console.log(`图片下载完成，开始覆盖原来的HTML文件写入文件`)
+        fs.writeFileSync(filePath.value, html)
+        loading.value = false
+        content.value = html
+      } else if (length === (index + 1) || (length === 0)) {
+        console.log(`本地图片，或者当前文章没有图片`)
+        content.value = html
+        loading.value = false
       }
-
-    }).catch((e) => {
-      log.error(e)
     })
-
 
   })
 
@@ -229,6 +223,15 @@ code
 
 
 
+
+
+
+
+
+
+
+
+
   table:not(.hljs-ln)
     display: table
     // width: 100%
@@ -246,6 +249,15 @@ code
 
 
   /*隔行改变行的背景色，如需要请打开*/
+
+
+
+
+
+
+
+
+
 
 
 
@@ -291,12 +303,30 @@ code
 
 
 
+
+
+
+
+
+
+
+
+
   table:not(.hljs-ln) tr th
     font-weight: bold
     background-color: #f0f0f0
 
 
   /*================表格结束================*/
+
+
+
+
+
+
+
+
+
 
 
 

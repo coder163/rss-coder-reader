@@ -1,3 +1,5 @@
+import $axios from "@/util/api";
+
 const FeedParser = require("feedparser");
 const request = require('request');
 // const path = require('path');
@@ -6,6 +8,7 @@ import path from "path"
 import {result, IResponseResult, IResult, responseResult} from "@/domain/result";
 import {ResponseCode} from "@/domain/enum";
 import log from "@/util/log";
+import {AxiosResponse} from "axios";
 
 
 export function feedParse(link: string): Promise<IResponseResult> {
@@ -16,41 +19,56 @@ export function feedParse(link: string): Promise<IResponseResult> {
     // 为给定 ID 的 user 创建请求
 
 
-    return new Promise((resolve, reject) => {
-        request({
-            url: link,
-            timeout: 3000
-        }, function (err: any, httpResponse: any, body: any) {
-            if (err) {
+    return new Promise(async (resolve, reject) => {
+        let resp = null
+        try {
+            resp = await $axios({
+                method: 'get',
+                url: link,
+                responseType: 'stream'
+            })
+            console.log(resp)
+            resp.data.pipe(feedparser);
+            // request({
+            //     url: link,
+            //     timeout: 3000
+            // }, function (err: any, httpResponse: any, body: any) {
+            //     if (err) {
+            //         responseResult.code = ResponseCode.FAIL;
+            //         responseResult.message = err.message;
+            //         reject(responseResult)
+            //     }
+            // }).pipe(feedparser)
+
+
+            feedparser.on('readable', function () {
+                let item
+                while ((item = feedparser.read())) {
+                    items.push(item)
+                }
+            })
+
+            feedparser.on('end', () => {
+
+                responseResult.code = ResponseCode.SUCCESS;
+
+                responseResult.data = items;
+
+                resolve(responseResult)
+
+            })
+            feedparser.on('error', (err: any) => {
                 responseResult.code = ResponseCode.FAIL;
                 responseResult.message = err.message;
+                log.error('抓取失败')
                 reject(responseResult)
-            }
-        }).pipe(feedparser)
-
-
-        feedparser.on('readable', function () {
-            let item
-            while ((item = feedparser.read())) {
-                items.push(item)
-            }
-        })
-
-        feedparser.on('end', () => {
-
-            responseResult.code = ResponseCode.SUCCESS;
-
-            responseResult.data = items;
-
-            resolve(responseResult)
-
-        })
-        feedparser.on('error', (err: any) => {
+            })
+        } catch (e: any) {
+            console.log('解析失败', e)
             responseResult.code = ResponseCode.FAIL;
-            responseResult.message = err.message;
-            log.error('抓取失败')
+            responseResult.message = e.message;
             reject(responseResult)
-        })
+        }
     })
 
 }
@@ -103,6 +121,23 @@ export async function getImgAddr(link: string): Promise<IResponseResult> {
     }
 
     return new Promise((resolve, reject) => {
+
+        $axios({
+            method: 'get',
+            url: link,
+
+        }).then((response: AxiosResponse) => {
+            console.log(response.status)
+            responseResult.code = ResponseCode.SUCCESS
+            responseResult.data = {
+                "link": response?.data.link,
+                "type": response.headers["content-type"]
+            }
+        }).catch(() => {
+
+        })
+        /*
+
         request(options, async function (error: any, response: any, body: any) {
 
             if (error || !response.statusCode) {
@@ -145,7 +180,9 @@ export async function getImgAddr(link: string): Promise<IResponseResult> {
 
 
         })
+        */
     })
+
 
 }
 

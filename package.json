@@ -7,8 +7,7 @@
   "private": true,
   "scripts": {
     "dev": " vite",
-    "build": " vite build && electron-builder",
-    "release": "cross-env GH_TOKEN=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 electron-builder"
+    "build": " vite build && electron-builder"
   },
   "engines": {
     "node": ">=14.17.0"
@@ -41,6 +40,7 @@
   "dependencies": {
     "@quasar/extras": "^1.14.3",
     "cheerio": "^1.0.0-rc.12",
+    "default-passive-events": "^2.0.0",
     "download": "^8.0.0",
     "electron-log": "^4.4.8",
     "electron-updater": "^5.2.1",

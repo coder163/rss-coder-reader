@@ -4,7 +4,6 @@ import ArticleListServiceImpl from "../service/list";
 import {ArticleItem, IArticleItem} from "@/domain/article";
 import {ArticleServiceImpl} from "@/service/article";
 import {ResponseCode, SubscriptionType} from "@/domain/enum";
-import {IResponseResult, IResult} from "@/domain/result";
 import log from "@/util/log";
 
 const fs = require("fs")
@@ -13,76 +12,82 @@ const {v4: uuid} = require("uuid");
 
 const cheerio = require("cheerio");
 
+import $axios from '@/util/api'
+import {AxiosResponse} from "axios";
 
 let tsi: TreeServiceImpl = new TreeServiceImpl();
 let alsi = new ArticleListServiceImpl();
 
 let asi = new ArticleServiceImpl()
-const download = require('download')
 export default class Reptile {
 
-    public static async parseAndDownloadImg($: any, link: string, path: string, cb: Function): Promise<string> {
+    public static async downloadImg($: any, link: string, path: string, cb: Function) {
+
         let fpath = `${getConfigPath()}/list/${path}`
         let imgs = $("img");
-        let isWrite = false;
-        return new Promise(async (resolve, reject) => {
-            for (let i = 0; i < imgs.length; i++) {
-                cb(imgs.length, i, isWrite)
-                //获取正常的值
-                let source = $(imgs[i]).attr("src");
-                if (source.startsWith('file:///')) {
-                    continue
-                }
-                //执行到此处表示存在非file协议的图片路径
-                isWrite = true;
+        //当前文章没有图片
+        if (imgs.length === 0) {
+            cb(imgs.length, 0, $.html(), 'local')
+        }
+        let count = 0;
+        for (let i = 0; i < imgs.length; i++) {
 
-                // debugger
-                //如果不是以http开头的尝试获取懒加载地址
-                if (!source.startsWith('http')) {
-                    if (source.startsWith("/")) {
-                        //临时解码并提取url中的域名
-                        let domain = (link.match(/(\w+):\/\/([^/:]+)(:\d*)?/) as RegExpMatchArray)[0];
-                        source = domain + source;
-                    } else {
-                        //处理懒加载
-                        source = $(imgs[i]).attr("data-original");
-                        if (source === undefined) {
-                            source = $(imgs[i]).attr("data-actualsrc");
-                        }
+            //获取正常的值
+            let source = $(imgs[i]).attr("src");
+            if (source.startsWith('file:///')) {
+                cb(imgs.length, count, $.html(), 'local')
+                count = count + 1
+                continue
+            }
+            //如果不是以http开头的尝试获取懒加载地址
+            if (!source.startsWith('http')) {
+                if (source.startsWith("/")) {
+                    //临时解码并提取url中的域名
+                    let domain = (link.match(/(\w+):\/\/([^/:]+)(:\d*)?/) as RegExpMatchArray)[0];
+                    source = domain + source;
+                } else {
+                    //处理懒加载
+                    source = $(imgs[i]).attr("data-original");
+                    if (source === undefined) {
+                        source = $(imgs[i]).attr("data-actualsrc");
                     }
                 }
-                if (source === undefined) {
-                    continue
-                }
-                $(imgs[i]).attr("referrerpolicy", null)
+            }
+            if (source === undefined) {
+                continue
+            }
+            console.log(source)
+            $(imgs[i]).attr("referrerpolicy", null)
 
-                try {
-                    //获取图片地址
-                    let res: IResponseResult = await getImgAddr(source)
-                    if (res.code === ResponseCode.FAIL) {
-                        log.error(`图片地址获取失败`)
-                    }
-                    // @ts-ignore
-                    let suffix = res?.type?.split('/')[1]
-                    //重新命名
-                    let imgName = `${uuid().replaceAll("-", "")}.${suffix}`;
-                    //下载图片
-                    await download(res.data.link, `${fpath}/imgs/`, {
-                        filename: imgName,
-                        timeout: 500
-                    })
-                    log.info(`当前正在解析第${i + 1}张图，地址：${res.data.link}`)
+            try {
+
+                let response = await $axios({
+                    method: 'get',
+                    url: source,
+                    responseType: 'stream'
+                })
+
+                let suffix = response.headers["content-type"]?.split('/')[1]
+                let imgName = `${uuid().replaceAll("-", "")}.${suffix}`;
+                let writer = await fs.createWriteStream(`${fpath}/imgs/${imgName}`);
+                response.data.pipe(writer);
+                //写入完成
+                writer.on('finish', () => {
+                    // log.info(`图片 【${imgName}】 下载完成`)
                     $(imgs[i]).attr("src", `file:///${fpath}/imgs/${imgName}`);
 
-                } catch (e: any) {
-                    log.error(`图片下载失败...：${e.message}`)
-                }
+                    cb(imgs.length, count, $.html(), 'network')
+                    count = count + 1
+                })
 
+            } catch (e: any) {
 
+                cb(imgs.length, count, $.html(), 'network')
+                log.error(`图片 【${source}】 下载失败，错误描述${e}`)
+                count = count + 1;
             }
-            resolve($.html())
 
-        })
+        }
 
 
     }
@@ -93,12 +98,10 @@ export default class Reptile {
         mkdirsSync(`${fpath}/imgs`)
         //解析并替换图片路径
         let $ = cheerio.load(item.summary);
-
-
         for (const element of $("a")) {
             //'javascript':openExternal(${$(element).attr('href')})
-            $(element).attr('target',null)
-            $(element).attr('href',`javascript:openExternal('${$(element).attr('href')}')`)
+            $(element).attr('target', null)
+            $(element).attr('href', `javascript:openExternal('${$(element).attr('href')}')`)
         }
 
         //清理HTML
@@ -108,7 +111,6 @@ export default class Reptile {
         fs.writeFileSync(`${fpath}/index.html`, html) //文件写入成功。
         log.info(`文章抓取完成：${item.title}`)
     }
-
 
 
     public static clearAttrByHtml(strText: string) {
