@@ -39,6 +39,7 @@
   },
   "dependencies": {
     "@quasar/extras": "^1.14.3",
+    "bagpipe": "^0.3.5",
     "cheerio": "^1.0.0-rc.12",
     "default-passive-events": "^2.0.0",
     "download": "^8.0.0",

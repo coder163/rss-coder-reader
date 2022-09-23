@@ -48,41 +48,34 @@ watch(articleitem, (value, oldValue, onCleanup) => {
 
 
 })
+let isDone = true;
 watch(filePath, async (value, oldValue, onCleanup) => {
   loading.value = true;
   //这种方式可以
-  if (value === oldValue) {
-    log.info('路径无变化，同一个文件');
+  if (value === oldValue || !isDone) {
+    log.info('路径无变化，同一个文件,或者正在下载图片');
     return
   }
 
   document.querySelector("#content")?.scrollTo(0, 0);
   scrollArea.value?.setScrollPosition('vertical', 0)
-  fs.readFile(filePath.value, "utf8", async (err: NodeJS.ErrnoException | null, data: string) => {
-    if (err) {
-      //防止读取失败依然加载
-      loading.value = false;
-      log.error(err.message)
-      return
+  if (!fs.existsSync(filePath.value,)){
+    console.log('文件不存在')
+    loading.value = false
+    return
+  }
+    let data = fs.readFileSync(filePath.value, "utf8")
+
+
+  content.value=await Reptile.downloadImg(cheerio.load(data), articleitem.value.link, articleitem.value.path, (length: number, index: number) => {
+    loadingMessage.value = `正在缓存图片至本地，${length}/${index + 1} ，请稍后`
+    // console.log(value, filePath.value)
+    if ((index + 1) < length) {
+      isDone = false
     }
-    // //重新解析文章，替换img的src
-    Reptile.downloadImg(cheerio.load(data), articleitem.value.link, articleitem.value.path, (length: number, index: number, html: string, mark: string) => {
-      loadingMessage.value = `正在缓存图片至本地，${length}/${index + 1} ，请稍后`
-      if ((length === (index + 1)) && (mark !== 'local')) {
-        console.log(`图片下载完成，开始覆盖原来的HTML文件写入文件`)
-        fs.writeFileSync(filePath.value, html)
-        loading.value = false
-        content.value = html
-      } else if (length === (index + 1) || (length === 0)) {
-        console.log(`本地图片，或者当前文章没有图片`)
-        content.value = html
-        loading.value = false
-      }
-    })
-
   })
-
-
+  isDone = true
+  loading.value = false
 })
 
 ipcRenderer.on("read-content-done", async (ev: any, item: any) => {
@@ -232,6 +225,12 @@ code
 
 
 
+
+
+
+
+
+
   table:not(.hljs-ln)
     display: table
     // width: 100%
@@ -249,6 +248,12 @@ code
 
 
   /*隔行改变行的背景色，如需要请打开*/
+
+
+
+
+
+
 
 
 
@@ -312,12 +317,24 @@ code
 
 
 
+
+
+
+
+
+
   table:not(.hljs-ln) tr th
     font-weight: bold
     background-color: #f0f0f0
 
 
   /*================表格结束================*/
+
+
+
+
+
+
 
 
 

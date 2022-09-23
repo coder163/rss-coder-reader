@@ -23,23 +23,14 @@ export function feedParse(link: string): Promise<IResponseResult> {
         let resp = null
         try {
             resp = await $axios({
+                timeout: 3000,
                 method: 'get',
                 url: link,
                 responseType: 'stream'
             })
             console.log(resp)
-            resp.data.pipe(feedparser);
-            // request({
-            //     url: link,
-            //     timeout: 3000
-            // }, function (err: any, httpResponse: any, body: any) {
-            //     if (err) {
-            //         responseResult.code = ResponseCode.FAIL;
-            //         responseResult.message = err.message;
-            //         reject(responseResult)
-            //     }
-            // }).pipe(feedparser)
 
+            resp.data.pipe(feedparser);
 
             feedparser.on('readable', function () {
                 let item
@@ -94,97 +85,46 @@ export function mkdirsSync(dirname: string) {
 
 const rimraf = require('rimraf');
 
-export function delDirSync(url: string) {
-    log.info(`删除【${url}】`)
-    rimraf(url, function (err: any) { // 删除当前目录下的 test.txt
-        if (err) {
-            log.error(err);
-        }
-    });
+//删除文件夹
+export function delDirSync(path: string) {
+    var files = [];
+    if (fs.existsSync(path)) {
+        files = fs.readdirSync(path);
+        files.forEach((file: any, index: number) => {
+            var curPath = path + "/" + file;
+            if (fs.statSync(curPath).isDirectory()) {
+                delDirSync(curPath); //递归删除文件夹
 
-}
-
-/**
- * 状态码302时获取图片地址
- * @param link
- */
-export async function getImgAddr(link: string): Promise<IResponseResult> {
-    var options = {
-        timeout: 500,
-        url: link,
-        followRedirect: false,
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept-Charset': 'UTF-8;',
-            'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; zh-CN; rv:1.9.2.8) Firefox/3.6.8',
-        }
-    }
-
-    return new Promise((resolve, reject) => {
-
-        $axios({
-            method: 'get',
-            url: link,
-
-        }).then((response: AxiosResponse) => {
-            console.log(response.status)
-            responseResult.code = ResponseCode.SUCCESS
-            responseResult.data = {
-                "link": response?.data.link,
-                "type": response.headers["content-type"]
-            }
-        }).catch(() => {
-
-        })
-        /*
-
-        request(options, async function (error: any, response: any, body: any) {
-
-            if (error || !response.statusCode) {
-                responseResult.code = ResponseCode.FAIL
-                responseResult.message = `获取图片真实地址失败${error.message}：${link}`
-                reject(responseResult)
-                return
-            }
-            // console.log(response.statusCode, link)
-            if (response.statusCode === 301 || response.statusCode === 302) {
-
-                await getImgAddr(response.headers.location).then((result) => {
-                    responseResult.code = ResponseCode.SUCCESS
-                    responseResult.data = {
-                        "link": result?.data.link,
-                        "type": result?.data.type
-                    }
-                    // log.info(`图片重定向${result?.data.link}`)
-                    resolve(responseResult)
-                    return
-                }).catch((e) => {
-                    responseResult.code = ResponseCode.FAIL
-                    responseResult.message = e.message
-                    reject(responseResult)
-                })
-
-
-            }
-
-            if (response.statusCode === 200) {
-
-                responseResult.code = ResponseCode.SUCCESS
-                responseResult.data = {
-                    "link": link,
-                    "type": response.headers["content-type"]
+            } else {
+                // console.log(`【删除】${curPath}`)
+                try {
+                    fs.unlinkSync(curPath); //删除文件
+                } catch (error) {
+                    console.log("删除出错：", error);
                 }
-                resolve(responseResult)
-                return
             }
+        });
+        log.info(`删除【${path}】`)
+        rimraf(path, function (err: any) { // 删除当前目录下的 test.txt
+            if (err) {
+                log.error(err);
+            }
+        });
 
-
-        })
-        */
-    })
-
-
+    }
 }
+
+// export function delDirSync(url: string) {
+//     log.info(`删除【${url}】`)
+//     rimraf(url, function (err: any) { // 删除当前目录下的 test.txt
+//         if (err) {
+//             log.error(err);
+//         }
+//     });
+//
+// }
+
+
 
 /**
  * 获取配置文件路径articles.db

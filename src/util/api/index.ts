@@ -3,7 +3,7 @@ import {AxiosRequestConfig, AxiosResponse} from "axios";
 const axios = require('axios')
 
 const instance = axios.create({
-    timeout: 1000,
+    timeout: 3500,
     headers: {
         'Access-Control-Allow-Origin': '*',
     }

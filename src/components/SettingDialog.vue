@@ -148,7 +148,7 @@ async function subTitleFocus() {
   //开始解析
   loading.value = true;
   //订阅入库
-  let response = await feedParse(NodeOption.link).then((response) => {
+  await feedParse(NodeOption.link).then((response) => {
     let feeds = response.data;
     if (subTitle.value === '' || subTitle.value === undefined) {
       subTitle.value = feeds[0].meta.title

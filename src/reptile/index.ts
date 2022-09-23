@@ -1,10 +1,11 @@
 import TreeServiceImpl from "../service/source";
-import {getConfigPath, getDateString, getImgAddr, getUuid, mkdirsSync} from '@/util/common'
+import {getConfigPath, getDateString, getUuid, mkdirsSync} from '@/util/common'
 import ArticleListServiceImpl from "../service/list";
 import {ArticleItem, IArticleItem} from "@/domain/article";
 import {ArticleServiceImpl} from "@/service/article";
-import {ResponseCode, SubscriptionType} from "@/domain/enum";
+import {SubscriptionType} from "@/domain/enum";
 import log from "@/util/log";
+import $axios from '@/util/api'
 
 const fs = require("fs")
 
@@ -12,33 +13,34 @@ const {v4: uuid} = require("uuid");
 
 const cheerio = require("cheerio");
 
-import $axios from '@/util/api'
-import {AxiosResponse} from "axios";
 
-let tsi: TreeServiceImpl = new TreeServiceImpl();
+
 let alsi = new ArticleListServiceImpl();
 
 let asi = new ArticleServiceImpl()
 export default class Reptile {
 
-    public static async downloadImg($: any, link: string, path: string, cb: Function) {
+
+    public static async downloadImg($: any, link: string, path: string, callback: Function): Promise<string> {
 
         let fpath = `${getConfigPath()}/list/${path}`
         let imgs = $("img");
+
+        let isDownload = false;
         //当前文章没有图片
         if (imgs.length === 0) {
-            cb(imgs.length, 0, $.html(), 'local')
+            callback(imgs.length, -1, $.html(), 'local')
         }
-        let count = 0;
         for (let i = 0; i < imgs.length; i++) {
-
+            callback(imgs.length, i)
             //获取正常的值
             let source = $(imgs[i]).attr("src");
             if (source.startsWith('file:///')) {
-                cb(imgs.length, count, $.html(), 'local')
-                count = count + 1
+                // console.log(`本地图${i}`)
+                // callback(imgs.length, i, $.html(), 'local')
                 continue
             }
+
             //如果不是以http开头的尝试获取懒加载地址
             if (!source.startsWith('http')) {
                 if (source.startsWith("/")) {
@@ -56,41 +58,47 @@ export default class Reptile {
             if (source === undefined) {
                 continue
             }
-            console.log(source)
             $(imgs[i]).attr("referrerpolicy", null)
 
-            try {
+            // let writer: WriteStream;
 
-                let response = await $axios({
-                    method: 'get',
-                    url: source,
-                    responseType: 'stream'
-                })
+            let response = await $axios({
+                method: 'get',
+                url: source,
+                responseType: 'arraybuffer',
+                timeout: 1400
+            }).catch((err: any) => {
+                log.error(`网络请求失败${err}`)
+            })
 
-                let suffix = response.headers["content-type"]?.split('/')[1]
-                let imgName = `${uuid().replaceAll("-", "")}.${suffix}`;
-                let writer = await fs.createWriteStream(`${fpath}/imgs/${imgName}`);
-                response.data.pipe(writer);
-                //写入完成
-                writer.on('finish', () => {
-                    // log.info(`图片 【${imgName}】 下载完成`)
-                    $(imgs[i]).attr("src", `file:///${fpath}/imgs/${imgName}`);
-
-                    cb(imgs.length, count, $.html(), 'network')
-                    count = count + 1
-                })
-
-            } catch (e: any) {
-
-                cb(imgs.length, count, $.html(), 'network')
-                log.error(`图片 【${source}】 下载失败，错误描述${e}`)
-                count = count + 1;
+            if (response === undefined) {
+                continue
             }
+
+
+            let suffix = response.headers["content-type"]?.split('/')[1]
+            let imgName = `${uuid().replaceAll("-", "")}.${suffix}`;
+            fs.writeFileSync(`${getConfigPath()}/list/${path}/imgs/${imgName}`, response.data, "binary");
+
+            $(imgs[i]).attr("src", `file:///${getConfigPath()}/list/${path}/imgs/${imgName}`)
+
+            log.info(`当前下载进度【${imgs.length}/${i + 1}】【${imgName}】`)
+
+            isDownload = true
+
 
         }
 
 
+        if (isDownload) {
+            log.info('下载完成，更新文件内容')
+            fs.writeFileSync(`${getConfigPath()}/list/${path}/index.html`, $.html());
+        }
+
+
+        return Promise.resolve($.html())
     }
+
 
     public static async parseArticle(item: IArticleItem) {
         //创建当前文章的目录
@@ -194,7 +202,8 @@ export default class Reptile {
         //点击节点获取对应的文章列表
 
 
-    };
+    }
+
 
 }
 
