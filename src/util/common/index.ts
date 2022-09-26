@@ -1,14 +1,14 @@
 import $axios from "@/util/api";
 
 const FeedParser = require("feedparser");
-const request = require('request');
+// const request = require('request');
 // const path = require('path');
 const fs = require("fs")
 import path from "path"
-import {result, IResponseResult, IResult, responseResult} from "@/domain/result";
-import {ResponseCode} from "@/domain/enum";
+import { result, IResponseResult, IResult, responseResult } from "@/domain/result";
+import { ResponseCode } from "@/domain/enum";
 import log from "@/util/log";
-import {AxiosResponse} from "axios";
+// import { AxiosResponse } from "axios";
 
 
 export function feedParse(link: string): Promise<IResponseResult> {
@@ -135,7 +135,7 @@ export function getConfigPath() {
     return path.join(process.cwd(), "/config").replace(/\\/g, "/")
 }
 
-const {v4: uuid} = require("uuid");
+const { v4: uuid } = require("uuid");
 
 /**
  * 获取唯一的id

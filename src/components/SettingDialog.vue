@@ -5,13 +5,13 @@
 
       <!-- 标题栏start -->
       <q-tabs v-model="tab" dense class="bg-grey-3" align="justify" narrow-indicator>
-        <q-tab name="source" label="订阅源"/>
-        <q-tab name="alarms" label="偏好设置"/>
-        <q-tab name="movies" label="关于"/>
+        <q-tab name="source" label="订阅源" />
+        <q-tab name="alarms" label="偏好设置" />
+        <q-tab name="movies" label="关于" />
 
-        <q-btn dense flat icon="close" v-close-popup/>
+        <q-btn dense flat icon="close" v-close-popup />
       </q-tabs>
-      <q-separator/>
+      <q-separator />
       <!-- 第1个选项卡start -->
       <q-tab-panels v-model="tab" animated>
 
@@ -29,13 +29,13 @@
 
           <q-input v-model="subText" placeholder="订阅地址：" stack-label dense>
             <template v-slot:append>
-              <q-btn round dense flat icon="add" @click="subTitleFocus"/>
+              <q-btn round dense flat icon="add" @click="subTitleFocus" />
             </template>
           </q-input>
 
-          <q-input v-model="subTitle" placeholder="订阅名称(可自动解析)：" stack-label dense/>
+          <q-input v-model="subTitle" placeholder="订阅名称(可自动解析)：" stack-label dense />
           <!-- 加载动画 -->
-          <q-inner-loading :showing="loading" label="正在解析，请稍后..." label-style="font-size: 1.1em"/>
+          <q-inner-loading :showing="loading" label="正在解析，请稍后..." label-style="font-size: 1.1em" />
 
 
         </q-tab-panel>
@@ -67,7 +67,7 @@
         </q-tab-panel>
         <!-- 第3个选项卡start -->
         <q-tab-panel name="movies">
-          <q-img :src="all"/>
+          <q-img :src="all" />
         </q-tab-panel>
       </q-tab-panels>
 
@@ -82,17 +82,17 @@
 <script setup lang="ts">
 import all from '@/assets/all.png'
 
-import {onMounted, ref, watch} from "vue";
+import { onMounted, ref, watch } from "vue";
 import TreeServiceImpl from '@/service/source'
 import SourceServiceImpl from '@/service/source'
 import NodeOption from '@/domain/node'
 import Reptile from "@/reptile";
-import {ChannelMessage, ResponseCode, SubscriptionType} from "@/domain/enum";
-import {feedParse, getUuid} from "@/util/common";
-import {logger} from "@/util/log/Log4jsConfig";
+import { ChannelMessage, ResponseCode, SubscriptionType } from "@/domain/enum";
+import { feedParse, getUuid } from "@/util/common";
+
 import log from "@/util/log";
 
-const {ipcRenderer} = window.require("electron");
+const { ipcRenderer } = window.require("electron");
 
 let updateModel = ref(true)
 

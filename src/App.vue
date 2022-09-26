@@ -1,17 +1,15 @@
 <template>
-
-
   <div id="app-home" :style="{ height:( winHeight-32) + 'px' }">
 
     <!-- 侧边栏 -->
     <div class="side" :style="{ display: isHide }">
 
       <q-bar class="q-electron-drag" style="background-color:#ecf0f6;">
-<!--        <q-btn flat class="q-electron-drag&#45;&#45;exception">-->
-          <img src="@/assets/logo.png" class="q-electron-drag--exception"/>
-          &nbsp;
-          猿阅
-<!--        </q-btn>-->
+        <!--        <q-btn flat class="q-electron-drag&#45;&#45;exception">-->
+        <img src="@/assets/logo.png" class="q-electron-drag--exception"/>
+        &nbsp;
+        猿阅
+        <!--        </q-btn>-->
         <q-space/>
       </q-bar>
       <side></side>
@@ -33,7 +31,6 @@
   </div>
   <setting-dialog/>
   <update/>
-
 </template>
 
 <script setup lang="ts">

@@ -1,7 +1,7 @@
 <template>
   <q-card style="height:100%;background:#e8e8e9" flat>
-    <q-scroll-area style="height: 80%;" id="side-context-menu">
-      <q-popup-proxy context-menu :target="'#side-context-menu'">
+    <q-scroll-area style="height: 95%;" id="side-context-menu">
+     <q-popup-proxy context-menu   :target="'#side-context-menu'">
         <q-list padding dense style="background:#e8e8e9">
           <q-item clickable v-ripple v-close-popup>
             <q-item-section @click="dialogClassify = true">
@@ -14,9 +14,9 @@
       <q-card-section>
         <q-list>
           <!-- 分类管理 -->
-          <q-expansion-item :id="'classify' + (index)" v-for="(sub, index) in subs" default-opened dense :label="sub.label">
+          <q-expansion-item :id="'classify' + (sub.id)" v-for="(sub, index) in subs" default-opened dense :label="sub.label">
             <!-- 右键菜单绑定到指定元素 -->
-            <q-popup-proxy context-menu :target="'#classify' + index">
+            <q-popup-proxy context-menu :target="'#classify' + sub.id">
 
               <q-list padding dense style="background:#e8e8e9">
 
@@ -26,7 +26,7 @@
                     <q-item-label>重命名</q-item-label>
                   </q-item-section>
                 </q-item>
-                <q-separator/>
+                <q-separator />
 
                 <q-item clickable v-ripple v-close-popup @click="classifyDelDialog($event, sub)">
 
@@ -51,14 +51,14 @@
                         <q-item-label>编辑</q-item-label>
                       </q-item-section>
                     </q-item>
-                    <q-separator/>
+                    <q-separator />
                     <q-item clickable v-ripple v-close-popup @click="subUpdateDialog($event, ch)">
                       <q-item-section>
                         <q-item-label>更新</q-item-label>
 
                       </q-item-section>
                     </q-item>
-                    <q-separator/>
+                    <q-separator />
                     <q-item clickable v-ripple v-close-popup @click="subDelDialog($event, ch)">
 
                       <q-item-section>
@@ -89,14 +89,14 @@
     <q-card>
       <q-card-section class="row ">
         添加分类
-        <q-space/>
-        <q-btn icon="close" flat round dense v-close-popup/>
+        <q-space />
+        <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
       <q-card-section style="width: 400px">
-        <q-input v-model="classifyText" placeholder="分类名称" stack-label dense/>
+        <q-input v-model="classifyText" placeholder="分类名称" stack-label dense />
       </q-card-section>
       <q-card-actions align="center">
-        <q-btn flat label="保存" color="primary" v-close-popup @click="addClassify"/>
+        <q-btn flat label="保存" color="primary" v-close-popup @click="addClassify" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -105,15 +105,15 @@
     <q-card>
       <q-card-section class="row ">
         修改分类
-        <q-space/>
-        <q-btn icon="close" flat round dense v-close-popup/>
+        <q-space />
+        <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
       <q-card-section style="width: 400px">
 
-        <q-input v-model="classifyText" placeholder="分类名称" stack-label dense/>
+        <q-input v-model="classifyText" placeholder="分类名称" stack-label dense />
       </q-card-section>
       <q-card-actions align="center">
-        <q-btn flat label="保存" color="primary" v-close-popup @click="renameClassify"/>
+        <q-btn flat label="保存" color="primary" v-close-popup @click="renameClassify" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -121,7 +121,7 @@
   <q-dialog v-model="dialogConfirm">
     <q-card>
       <q-card-section class="row ">
-        <q-space/>
+        <q-space />
         <!--        <q-btn icon="close" flat round dense v-close-popup/>-->
       </q-card-section>
       <q-card-section style="width: 400px">
@@ -129,9 +129,9 @@
       </q-card-section>
       <q-card-actions align="center">
 
-        <q-btn v-if="classifyShowing" flat label="删除分类" color="primary" v-close-popup @click="classifyDel"/>
-        <q-btn v-if="!classifyShowing" flat label="删除订阅" color="primary" v-close-popup @click="subDel"/>
-        <q-btn flat label="取消" color="primary" v-close-popup/>
+        <q-btn v-if="classifyShowing" flat label="删除分类" color="primary" v-close-popup @click="classifyDel" />
+        <q-btn v-if="!classifyShowing" flat label="删除订阅" color="primary" v-close-popup @click="subDel" />
+        <q-btn flat label="取消" color="primary" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -140,8 +140,8 @@
     <q-card>
       <q-card-section class="row ">
         修改订阅
-        <q-space/>
-        <q-btn icon="close" flat round dense v-close-popup/>
+        <q-space />
+        <q-btn icon="close" flat round dense v-close-popup />
       </q-card-section>
       <q-card-section style="width: 400px">
         <q-select v-model="subClassify" :options="subs" label="分类名称：">
@@ -157,12 +157,12 @@
 
         </q-input>
 
-        <q-input v-model="subTitle" placeholder="订阅名称：" stack-label dense/>
+        <q-input v-model="subTitle" placeholder="订阅名称：" stack-label dense />
 
       </q-card-section>
       <q-card-actions align="center">
 
-        <q-btn flat label="保存" color="primary" v-close-popup @click="updateSub"/>
+        <q-btn flat label="保存" color="primary" v-close-popup @click="updateSub" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -170,17 +170,17 @@
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref} from "vue";
+import { onMounted, ref } from "vue";
 
 import TreeServiceImpl from '@/service/source'
 import ArticleListServiceImpl from '@/service/list/'
-import NodeOption, {INodeOption} from '@/domain/node'
-import {delDirSync, feedParse, getConfigPath, getUuid} from '@/util/common'
+import NodeOption, { INodeOption } from '@/domain/node'
+import { delDirSync, feedParse, getConfigPath, getUuid } from '@/util/common'
 import Reptile from '@/reptile'
-import {SubscriptionType} from "@/domain/enum";
+import { SubscriptionType } from "@/domain/enum";
 import log from "@/util/log";
 
-const {ipcRenderer} = window.require("electron");
+const { ipcRenderer } = window.require("electron");
 
 //订阅列表
 let subs = ref();
@@ -307,7 +307,7 @@ function classifyDelDialog(ev: MouseEvent, item: INodeOption) {
 async function subUpdateDialog(ev: MouseEvent, item: INodeOption) {
   await feedParse(item.link).then((resp) => {
     Reptile.parseItem(item.link, item.pid, resp.data).catch((err) => {
-      log.error(err,message)
+      log.error(err, message)
     })
   }).catch((err) => {
     log.error(err.message)
